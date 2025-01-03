@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://cp0ep7akdm1sl"]
+
+[ext_resource type="TileSet" uid="uid://b0atrdnoqaxik" path="res://Assets/ColorsTileSet/ColorTileSet.tres" id="1_qhwms"]
+
+[node name="Node2D" type="Node2D"]
+
+[node name="Requirements" type="TileMap" parent="."]
+tile_set = ExtResource("1_qhwms")
+rendering_quadrant_size = 32
+format = 2
+
+[node name="Requires" type="TileMapLayer" parent="Requirements"]
+tile_map_data = PackedByteArray(0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 2, 0, 3, 0, 0, 0, 0, 0, 4, 0, 0, 0, 2, 0, 3, 0, 0, 0, 0, 0, 6, 0, 0, 0, 2, 0, 3, 0, 0, 0, 0, 0, 7, 0, 0, 0, 2, 0, 3, 0, 0, 0, 0, 0)
+tile_set = ExtResource("1_qhwms")
