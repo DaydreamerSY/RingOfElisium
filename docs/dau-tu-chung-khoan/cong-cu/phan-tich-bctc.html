@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phân tích nhanh báo cáo tài chính</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f7f9; --card: #ffffff; --text: #1f2328; --muted: #59636e; --border: #d1d9e0;
+    --accent: #0b5cad; --accent-text: #ffffff; --input-bg: #ffffff;
+    --good: #116329; --good-bg: #dafbe1;
+    --ok: #7d4e00; --ok-bg: #fff8c5;
+    --bad: #a40e26; --bad-bg: #ffebe9;
+    --info: #424a53; --info-bg: #eff2f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --card: #151b23; --text: #e6edf3; --muted: #9198a1; --border: #3d444d;
+      --accent: #4493f8; --accent-text: #0d1117; --input-bg: #0d1117;
+      --good: #56d364; --good-bg: rgba(46, 160, 67, .18);
+      --ok: #e3b341; --ok-bg: rgba(187, 128, 9, .18);
+      --bad: #ff7b72; --bad-bg: rgba(248, 81, 73, .18);
+      --info: #b7bdc8; --info-bg: rgba(110, 118, 129, .18);
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); }
+  header, main, footer { max-width: 1280px; margin: 0 auto; padding: 12px 16px; }
+  h1 { font-size: 1.5rem; margin: 8px 0 4px; }
+  h2 { font-size: 1.1rem; margin: 0 0 12px; }
+  h3 { font-size: .95rem; margin: 18px 0 8px; }
+  p { margin: 6px 0; }
+  code { font-size: .9em; background: var(--info-bg); padding: 0 4px; border-radius: 4px; }
+  .muted { color: var(--muted); }
+  .note { font-size: .85rem; color: var(--muted); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0; }
+  button, select { font: inherit; padding: 7px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; }
+  button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  details summary { cursor: pointer; font-weight: 600; }
+  details ol { margin: 8px 0; padding-left: 22px; }
+  .layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+  .layout > * { min-width: 0; }
+  @media (min-width: 1000px) { .layout { grid-template-columns: 460px minmax(0, 1fr); align-items: start; } }
+  table.fixed { table-layout: fixed; }
+  td.single input.field { width: 50%; }
+  td.single { text-align: right; }
+  .val { margin-bottom: 3px; }
+  .scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+  thead th, .group-title th { font-size: .85rem; color: var(--muted); font-weight: 600; }
+  .group-title th { background: var(--info-bg); color: var(--text); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  td.num { white-space: nowrap; }
+  td.num small, th small, td small { display: block; color: var(--muted); font-size: .78rem; font-weight: 400; white-space: normal; }
+  th.label { font-weight: 400; }
+  input.field { width: 100%; min-width: 0; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--input-bg); color: var(--text); font: inherit; text-align: right; font-variant-numeric: tabular-nums; }
+  input.field.invalid { border-color: var(--bad); background: var(--bad-bg); }
+  .inline-field { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+  .inline-field input.field { width: 7em; }
+  .badge { display: inline-block; padding: 1px 9px; border-radius: 999px; font-size: .8rem; font-weight: 600; white-space: nowrap; }
+  .good { color: var(--good); background: var(--good-bg); }
+  .ok { color: var(--ok); background: var(--ok-bg); }
+  .bad { color: var(--bad); background: var(--bad-bg); }
+  .info { color: var(--info); background: var(--info-bg); }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .kpi { border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+  .kpi .l { font-size: .8rem; color: var(--muted); }
+  .kpi .v { font-size: 1.3rem; font-weight: 650; font-variant-numeric: tabular-nums; margin: 2px 0 4px; }
+  ul.flags { list-style: none; padding: 0; margin: 0; }
+  ul.flags li { padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; }
+  .banner { padding: 8px 12px; border-radius: 8px; margin: 8px 0; }
+  .ratio-name { font-weight: 600; }
+  footer { font-size: .85rem; color: var(--muted); padding-bottom: 32px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Phân tích nhanh báo cáo tài chính</h1>
+  <p class="muted">Nhập số liệu từ BCTC <b>hợp nhất</b> của 2 năm liên tiếp để tính các chỉ số, phát hiện dấu hiệu cảnh báo và định giá theo kịch bản. Mọi phép tính chạy trên trình duyệt của bạn; dữ liệu không được gửi đi đâu.</p>
+  <details>
+    <summary>Cách dùng</summary>
+    <ol>
+      <li>Mở BCTC năm đã kiểm toán. BCTC năm luôn có sẵn cột số liệu năm trước ("Số đầu năm" hoặc "Năm trước"), nên một bộ BCTC là đủ để điền cả 2 cột.</li>
+      <li>Chọn đúng <b>đơn vị</b> của số liệu bạn nhập. BCTC gốc thường ghi bằng đồng; các trang dữ liệu thường dùng tỷ đồng hoặc triệu đồng.</li>
+      <li>Có thể gõ <code>4.500</code> hoặc <code>4500</code>; số thập phân dùng dấu phẩy (<code>1,5</code>); số âm gõ <code>-100</code> hoặc <code>(100)</code>. Các khoản chi phí luôn được hiểu là số dương.</li>
+      <li>Cột "Năm trước" có thể bỏ trống; khi đó công cụ dùng số cuối năm và không tính tăng trưởng.</li>
+      <li>Đọc kết quả như những <b>câu hỏi cần tìm hiểu thêm</b>, không phải kết luận. Ngưỡng đánh giá chỉ dành cho doanh nghiệp phi tài chính.</li>
+    </ol>
+  </details>
+  <div class="actions">
+    <button type="button" class="primary" id="btn-example">Nạp ví dụ Công ty ABC</button>
+    <button type="button" id="btn-clear">Xóa trắng</button>
+    <label for="unit">Đơn vị số liệu BCTC:</label>
+    <select id="unit" class="persist">
+      <option value="1e9">tỷ đồng</option>
+      <option value="1e6">triệu đồng</option>
+      <option value="1">đồng</option>
+    </select>
+  </div>
+  <div id="banner" class="banner info" role="status" hidden></div>
+</header>
+
+<main class="layout">
+  <section class="card" aria-labelledby="h-inputs">
+    <h2 id="h-inputs">Số liệu đầu vào</h2>
+    <div class="scroll"><table id="input-table" class="fixed"></table></div>
+  </section>
+
+  <div>
+    <section class="card" aria-labelledby="h-kpis">
+      <h2 id="h-kpis">Tóm tắt</h2>
+      <div id="kpis" class="kpis"></div>
+      <div id="input-notes"></div>
+    </section>
+    <section class="card" aria-labelledby="h-flags">
+      <h2 id="h-flags">Điểm sáng và cảnh báo</h2>
+      <div id="flags"></div>
+    </section>
+    <section class="card" aria-labelledby="h-ratios">
+      <h2 id="h-ratios">Bảng chỉ số</h2>
+      <div id="ratios"></div>
+    </section>
+    <section class="card" aria-labelledby="h-dupont">
+      <h2 id="h-dupont">Phân tích DuPont: ROE đến từ đâu?</h2>
+      <div id="dupont"></div>
+    </section>
+    <section class="card" aria-labelledby="h-valuation">
+      <h2 id="h-valuation">Định giá theo kịch bản</h2>
+      <p class="note">Giá trị mỗi cổ phiếu = EPS hiện tại × (1 + tăng trưởng LNST năm tới) × P/E áp dụng. Thử thay đổi giả định để thấy kết quả nhạy đến mức nào.</p>
+      <div id="valuation-inputs"></div>
+      <div id="valuation"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <p><b>Công cụ học tập, không phải lời khuyên đầu tư.</b> Ngưỡng đánh giá chỉ mang tính tham khảo cho doanh nghiệp phi tài chính và cần được so sánh với doanh nghiệp cùng ngành; không áp dụng cho ngân hàng, công ty chứng khoán, bảo hiểm. Dữ liệu bạn nhập chỉ được lưu trong trình duyệt trên máy của bạn.</p>
+</footer>
+
+<script>
+(() => {
+  'use strict';
+
+  const STORAGE_KEY = 'phan-tich-bctc-v1';
+
+  const STOCK_FIELDS = [
+    ['price', 'Giá cổ phiếu', 'đồng/cổ phiếu'],
+    ['shares', 'Số cổ phiếu đang lưu hành', 'triệu cổ phiếu'],
+    ['dps', 'Cổ tức tiền mặt năm gần nhất', 'đồng/cổ phiếu; "cổ tức 25%" = 2.500'],
+    ['deposit', 'Lãi suất tiết kiệm 12 tháng để so sánh', '%/năm, tự nhập'],
+  ];
+
+  const STATEMENT_GROUPS = [
+    { title: 'Kết quả kinh doanh (cả năm)', fields: [
+      ['rev', 'Doanh thu thuần'],
+      ['cogs', 'Giá vốn hàng bán'],
+      ['selling', 'Chi phí bán hàng', 'không có thì nhập 0'],
+      ['admin', 'Chi phí quản lý doanh nghiệp', 'không có thì nhập 0'],
+      ['interest', 'Chi phí lãi vay', 'dòng "Trong đó: chi phí lãi vay"; không vay thì nhập 0'],
+      ['ebt', 'Tổng lợi nhuận kế toán trước thuế'],
+      ['ni', 'LNST của cổ đông công ty mẹ', 'không có công ty con thì lấy LNST'],
+    ]},
+    { title: 'Tình hình tài chính (cuối năm)', fields: [
+      ['cash', 'Tiền và các khoản tương đương tiền'],
+      ['sti', 'Đầu tư tài chính ngắn hạn', 'chủ yếu là tiền gửi có kỳ hạn'],
+      ['recv', 'Các khoản phải thu ngắn hạn'],
+      ['inv', 'Hàng tồn kho'],
+      ['ca', 'Tài sản ngắn hạn'],
+      ['ta', 'Tổng tài sản'],
+      ['cl', 'Nợ ngắn hạn'],
+      ['std', 'Vay và nợ thuê tài chính ngắn hạn'],
+      ['ltd', 'Vay và nợ thuê tài chính dài hạn'],
+      ['tl', 'Nợ phải trả'],
+      ['eq', 'Vốn chủ sở hữu của cổ đông công ty mẹ', 'không gồm lợi ích cổ đông không kiểm soát'],
+    ]},
+    { title: 'Lưu chuyển tiền tệ (cả năm)', fields: [
+      ['cfo', 'Lưu chuyển tiền thuần từ hoạt động kinh doanh', 'có thể âm'],
+      ['capex', 'Tiền chi mua sắm, xây dựng tài sản cố định'],
+      ['da', 'Khấu hao tài sản cố định', 'trong phần điều chỉnh của báo cáo'],
+    ]},
+  ];
+
+  const SCENARIOS = [['bear', 'Bi quan'], ['base', 'Cơ sở'], ['bull', 'Lạc quan']];
+  const EXPENSE_KEYS = ['cogs', 'selling', 'admin', 'interest', 'capex', 'da'];
+  const NEGATIVE_OK = new Set(['ebt', 'ni', 'eq', 'cfo', 'g_bear', 'g_base', 'g_bull']);
+
+  const ASSUMPTION_DEFAULTS = {
+    deposit: 6,
+    g_bear: 0, pe_bear: 7, w_bear: 25,
+    g_base: 10, pe_base: 9, w_base: 50,
+    g_bull: 15, pe_bull: 11, w_bull: 25,
+    mos: 20,
+  };
+
+  // Công ty ABC (giả định), khớp với số liệu trong Bài 2–4 của cẩm nang. Đơn vị: tỷ đồng.
+  const EXAMPLE = {
+    price: 50000, shares: 100, dps: 2500,
+    rev: [4500, 5000], cogs: [3195, 3500], selling: [450, 500], admin: [195, 250],
+    interest: [55, 60], ebt: [625, 725], ni: [500, 580],
+    cash: [450, 500], sti: [200, 300], recv: [500, 600], inv: [850, 900], ca: [2100, 2400],
+    ta: [4550, 5000], cl: [1400, 1500], std: [450, 500], ltd: [350, 400], tl: [1850, 2000], eq: [2700, 3000],
+    cfo: [null, 660], capex: [null, 400], da: [null, 250],
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const isNum = (x) => typeof x === 'number' && Number.isFinite(x);
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // ---------- Đọc và định dạng số kiểu Việt Nam ----------
+  function parseNum(raw) {
+    let s = String(raw == null ? '' : raw).trim().replace(/[\s ]/g, '').replace(/[đ%]/gi, '');
+    if (s === '') return NaN;
+    let neg = false;
+    if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
+    if (/^[-−–]/.test(s)) { neg = !neg; s = s.slice(1); }
+    const hasDot = s.includes('.');
+    const hasComma = s.includes(',');
+    if (hasDot && hasComma) {
+      s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+    } else if (hasDot) {
+      if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, '');
+    } else if (hasComma) {
+      s = /^[1-9]\d{0,2}(,\d{3})+$/.test(s) ? s.replace(/,/g, '') : s.replace(',', '.');
+    }
+    if (!/^(\d+\.?\d*|\.\d+)$/.test(s)) return NaN;
+    const v = parseFloat(s);
+    return neg ? -v : v;
+  }
+
+  const formatters = {};
+  const nf = (d) => formatters[d] || (formatters[d] = new Intl.NumberFormat('vi-VN', { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const inputFormatter = new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 4 });
+  const DASH = '—';
+  const fNum = (x, d = 0) => (isNum(x) ? nf(d).format(x) : DASH);
+  const fPct = (x, d = 1) => (isNum(x) ? nf(d).format(x * 100) + '%' : DASH);
+  const fSignedPct = (x, d = 1) => (isNum(x) ? (x > 0 ? '+' : '') + fPct(x, d) : DASH);
+  const fX = (x, d = 2) => (isNum(x) ? nf(d).format(x) + ' lần' : DASH);
+  const fTurn = (x, d = 1) => (isNum(x) ? nf(d).format(x) + ' vòng' : DASH);
+  const fTy = (x) => (isNum(x) ? nf(0).format(x) + ' tỷ' : DASH);
+  const fDong = (x) => (isNum(x) ? nf(0).format(x) + ' đ' : DASH);
+  const fDays = (x) => (isNum(x) ? nf(0).format(x) + ' ngày' : DASH);
+  const fInput = (x) => (isNum(x) ? inputFormatter.format(x) : '');
+
+  // ---------- Dựng ô nhập ----------
+  function fieldInput(id, ariaLabel) {
+    const mode = NEGATIVE_OK.has(id.replace(/_[01]$/, '')) ? 'text' : 'decimal';
+    return `<input id="${id}" class="field persist" inputmode="${mode}" autocomplete="off" spellcheck="false" aria-label="${esc(ariaLabel)}">`;
+  }
+
+  function buildInputs() {
+    let html = '<colgroup><col style="width:46%"><col style="width:27%"><col style="width:27%"></colgroup>' +
+      '<tbody><tr class="group-title"><th scope="colgroup" colspan="3">Thông tin cổ phiếu (hiện tại)</th></tr>';
+    for (const [k, label, hint] of STOCK_FIELDS) {
+      html += `<tr><th scope="row" class="label">${esc(label)}${hint ? `<small>${esc(hint)}</small>` : ''}</th>` +
+        `<td colspan="2" class="single">${fieldInput(k, label)}</td></tr>`;
+    }
+    html += '</tbody>';
+    for (const g of STATEMENT_GROUPS) {
+      html += `<tbody><tr class="group-title"><th scope="colgroup">${esc(g.title)}</th>` +
+        '<th scope="col" class="num">Năm trước</th><th scope="col" class="num">Năm nay</th></tr>';
+      for (const [k, label, hint] of g.fields) {
+        html += `<tr><th scope="row" class="label">${esc(label)}${hint ? `<small>${esc(hint)}</small>` : ''}</th>` +
+          `<td>${fieldInput(k + '_0', label + ', năm trước')}</td><td>${fieldInput(k + '_1', label + ', năm nay')}</td></tr>`;
+      }
+      html += '</tbody>';
+    }
+    $('input-table').innerHTML = html;
+
+    let v = '<div class="scroll"><table class="fixed"><colgroup><col style="width:25%"><col style="width:25%"><col style="width:25%"><col style="width:25%"></colgroup>' +
+      '<thead><tr><th scope="col">Kịch bản</th>' +
+      '<th scope="col" class="num">Tăng trưởng LNST năm tới (%)</th><th scope="col" class="num">P/E áp dụng (lần)</th>' +
+      '<th scope="col" class="num">Xác suất (%)</th></tr></thead><tbody>';
+    for (const [k, name] of SCENARIOS) {
+      v += `<tr><th scope="row">${name}</th><td>${fieldInput('g_' + k, 'Tăng trưởng LNST, kịch bản ' + name)}</td>` +
+        `<td>${fieldInput('pe_' + k, 'P/E, kịch bản ' + name)}</td><td>${fieldInput('w_' + k, 'Xác suất, kịch bản ' + name)}</td></tr>`;
+    }
+    v += '</tbody></table></div>' +
+      `<div class="inline-field"><label for="mos">Biên an toàn mong muốn (%)</label>${fieldInput('mos', 'Biên an toàn mong muốn')}</div>`;
+    $('valuation-inputs').innerHTML = v;
+  }
+
+  // ---------- Đọc dữ liệu ----------
+  function readField(id) {
+    const el = $(id);
+    const v = parseNum(el.value);
+    const invalid = el.value.trim() !== '' && !isNum(v);
+    el.classList.toggle('invalid', invalid);
+    el.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+    return v;
+  }
+
+  function readAll() {
+    const s = { notes: [] };
+    for (const [k] of STOCK_FIELDS) s[k] = readField(k);
+    for (const g of STATEMENT_GROUPS) for (const [k] of g.fields) s[k] = [readField(k + '_0'), readField(k + '_1')];
+    for (const [k] of SCENARIOS) for (const p of ['g', 'pe', 'w']) s[p + '_' + k] = readField(p + '_' + k);
+    s.mos = readField('mos');
+
+    // Quy đổi mọi số liệu BCTC về tỷ đồng; chi phí luôn là số dương.
+    const factor = Number($('unit').value) / 1e9;
+    for (const g of STATEMENT_GROUPS) for (const [k] of g.fields) {
+      s[k] = s[k].map((x) => (isNum(x) ? (EXPENSE_KEYS.includes(k) ? Math.abs(x) : x) * factor : x));
+    }
+    // Bảng giá điện tử hiển thị giá theo nghìn đồng (25,45 = 25.450đ).
+    if (isNum(s.price) && s.price > 0 && s.price < 1000) {
+      s.notes.push(`Giá ${fNum(s.price, 2)} được hiểu là nghìn đồng, tức ${fDong(s.price * 1000)} (bảng giá thường hiển thị theo nghìn đồng).`);
+      s.price *= 1000;
+    }
+    // Số cổ phiếu nhập theo triệu; nếu quá lớn thì có lẽ người dùng nhập số cổ phiếu đầy đủ.
+    if (isNum(s.shares) && s.shares >= 100000) {
+      s.notes.push(`Số cổ phiếu ${fNum(s.shares)} được hiểu là số cổ phiếu đầy đủ, tức ${fNum(s.shares / 1e6, 2)} triệu cổ phiếu.`);
+      s.shares /= 1e6;
+    }
+    return s;
+  }
+
+  // ---------- Tính chỉ số ----------
+  function compute(s) {
+    const C = (k) => s[k][1];
+    const P = (k) => s[k][0];
+    const div = (a, b) => (isNum(a) && isNum(b) && b !== 0 ? a / b : NaN);
+    const both = (k) => isNum(P(k)) && isNum(C(k));
+    const avg = (k) => (both(k) ? (P(k) + C(k)) / 2 : C(k));
+    const growth = (k) => (isNum(P(k)) && P(k) > 0 && isNum(C(k)) ? C(k) / P(k) - 1 : NaN);
+    const sumKnown = (...xs) => (xs.some(isNum) ? xs.reduce((a, x) => a + (isNum(x) ? x : 0), 0) : NaN);
+    const gross = (i) => s.rev[i] - s.cogs[i];
+    const core = (i) => s.rev[i] - s.cogs[i] - s.selling[i] - s.admin[i];
+
+    const r = {};
+    r.revG = growth('rev');
+    r.niG = growth('ni');
+    r.recvG = growth('recv');
+    r.invG = growth('inv');
+    r.gm = [div(gross(0), s.rev[0]), div(gross(1), s.rev[1])];
+    r.cm = [div(core(0), s.rev[0]), div(core(1), s.rev[1])];
+    r.nm = [div(s.ni[0], s.rev[0]), div(s.ni[1], s.rev[1])];
+    r.core = core(1);
+    r.avgEq = avg('eq');
+    r.avgTa = avg('ta');
+    r.eqAvgUsed = both('eq');
+    r.taAvgUsed = both('ta');
+    r.roe = r.avgEq > 0 ? div(C('ni'), r.avgEq) : NaN;
+    r.roa = div(C('ni'), r.avgTa);
+    r.cr = div(C('ca'), C('cl'));
+    r.qr = isNum(C('ca')) && isNum(C('inv')) ? div(C('ca') - C('inv'), C('cl')) : NaN;
+    r.debt = sumKnown(C('std'), C('ltd'));
+    r.liquid = sumKnown(C('cash'), C('sti'));
+    r.de = C('eq') > 0 ? div(r.debt, C('eq')) : NaN;
+    r.la = div(C('tl'), C('ta'));
+    r.netDebt = r.debt - r.liquid;
+    const interest = C('interest');
+    r.icr = !isNum(interest) ? NaN : interest === 0 ? Infinity : div(C('ebt') + interest, interest);
+    r.invTurn = div(C('cogs'), avg('inv'));
+    r.invDays = div(365, r.invTurn);
+    r.recvTurn = div(C('rev'), avg('recv'));
+    r.dso = div(365, r.recvTurn);
+    r.assetTurn = div(C('rev'), r.avgTa);
+    r.lev = r.avgEq > 0 ? div(r.avgTa, r.avgEq) : NaN;
+    r.cfoNi = C('ni') > 0 ? div(C('cfo'), C('ni')) : NaN;
+    r.fcf = isNum(C('cfo')) && isNum(C('capex')) ? C('cfo') - C('capex') : NaN;
+    r.divTotal = isNum(s.dps) && isNum(s.shares) ? (s.dps * s.shares) / 1000 : NaN;
+    r.fcfDiv = r.divTotal > 0 ? div(r.fcf, r.divTotal) : NaN;
+    r.eps = div(C('ni') * 1000, s.shares);
+    r.bvps = div(C('eq') * 1000, s.shares);
+    r.pe = r.eps > 0 ? div(s.price, r.eps) : NaN;
+    r.pb = r.bvps > 0 ? div(s.price, r.bvps) : NaN;
+    r.ey = r.pe > 0 ? 1 / r.pe : NaN;
+    r.dy = s.price > 0 ? div(s.dps, s.price) : NaN;
+    r.payout = r.eps > 0 ? div(s.dps, r.eps) : NaN;
+    r.mcap = isNum(s.price) && isNum(s.shares) ? (s.price * s.shares) / 1000 : NaN;
+    r.ev = r.mcap + r.debt - r.liquid;
+    r.ebitda = isNum(C('ebt')) && isNum(C('da')) ? C('ebt') + (isNum(interest) ? interest : 0) + C('da') : NaN;
+    r.evEbitda = r.ebitda > 0 ? div(r.ev, r.ebitda) : NaN;
+    r.peg = r.pe > 0 && r.niG > 0 ? r.pe / (r.niG * 100) : NaN;
+    r.hasData = [C('rev'), C('ni'), C('ta'), C('eq')].some(isNum);
+    return r;
+  }
+
+  // ---------- Đánh giá ----------
+  const LABEL = { good: 'Tốt', ok: 'Trung bình', bad: 'Cần chú ý', info: 'Tham khảo' };
+  const atLeast = (x, good, ok) => (!isNum(x) ? 'info' : x >= good ? 'good' : x >= ok ? 'ok' : 'bad');
+  const atMost = (x, good, ok) => (!isNum(x) ? 'info' : x <= good ? 'good' : x <= ok ? 'ok' : 'bad');
+  const trend = (cur, prev) => (!isNum(cur) || !isNum(prev) ? 'info' : cur - prev >= -0.005 ? 'good' : cur - prev > -0.03 ? 'ok' : 'bad');
+  const TREND_TEXT = { good: 'Ổn định/tăng', ok: 'Giảm nhẹ', bad: 'Giảm mạnh', info: 'Tham khảo' };
+  const GAP_TEXT = { good: 'Bình thường', ok: 'Cần theo dõi', bad: 'Bất thường', info: 'Tham khảo' };
+  const badge = (level, text) => `<span class="badge ${level}">${text || LABEL[level]}</span>`;
+
+  function cfoLevel(s, r) {
+    if (s.cfo[1] < 0 && s.ni[1] > 0) return 'bad';
+    return atLeast(r.cfoNi, 1, 0.5);
+  }
+
+  function buildRows(s, r) {
+    const C = (k) => s[k][1];
+    const P = (k) => s[k][0];
+    const avgNote = (used) => (used ? '' : ' Thiếu số năm trước nên dùng số cuối năm.');
+    const margin = (name, pair, formula) => {
+      const level = trend(pair[1], pair[0]);
+      return {
+        name,
+        value: fPct(pair[1]) + (isNum(pair[0]) ? `<small>năm trước ${fPct(pair[0])}</small>` : ''),
+        level, text: TREND_TEXT[level],
+        note: formula + ' So sánh với doanh nghiệp cùng ngành; ổn định hoặc tăng là tốt.',
+      };
+    };
+
+    let niValue;
+    let niLevel;
+    if (isNum(C('ni')) && C('ni') <= 0) { niValue = 'Lỗ'; niLevel = 'bad'; }
+    else if (isNum(P('ni')) && P('ni') <= 0 && C('ni') > 0) { niValue = 'Từ lỗ sang lãi'; niLevel = 'info'; }
+    else { niValue = fSignedPct(r.niG); niLevel = atLeast(r.niG, 0.1, 0); }
+
+    const gaps = [r.recvG - r.revG, r.invG - r.revG].filter(isNum);
+    const maxGap = gaps.length ? Math.max(...gaps) : NaN;
+    const gapLevel = !isNum(maxGap) ? 'info' : maxGap > 0.2 ? 'bad' : maxGap > 0.05 ? 'ok' : 'good';
+
+    const cfoRow = isNum(C('ni')) && C('ni') <= 0
+      ? { name: 'CFO / LNST', value: DASH, level: 'info', note: `Không tính khi doanh nghiệp lỗ. Dòng tiền kinh doanh năm nay: ${fTy(C('cfo'))}.` }
+      : { name: 'CFO / LNST', value: fX(r.cfoNi), level: cfoLevel(s, r), note: 'Lưu chuyển tiền thuần từ hoạt động kinh doanh / LNST. Từ 1 trở lên: lợi nhuận đã thành tiền. Nên xem cộng dồn 3–5 năm.' };
+
+    const divRow = r.divTotal > 0
+      ? { name: 'FCF / Cổ tức tiền mặt', value: fX(r.fcfDiv), level: !isNum(r.fcfDiv) ? 'info' : r.fcfDiv >= 1 ? 'good' : 'bad',
+          note: `Cổ tức tiền mặt ước tính = Cổ tức mỗi cổ phiếu × Số cổ phiếu = ${fTy(r.divTotal)}. Từ 1 trở lên: cổ tức được trả bằng tiền doanh nghiệp làm ra.` }
+      : { name: 'FCF / Cổ tức tiền mặt', value: isNum(s.dps) ? 'Không trả cổ tức tiền mặt' : DASH, level: 'info', note: 'Nhập cổ tức tiền mặt mỗi cổ phiếu để tính.' };
+
+    const fcfLevel = !isNum(r.fcf) ? 'info' : r.fcf >= 0 ? 'good' : 'ok';
+
+    return [
+      { title: 'Tăng trưởng', rows: [
+        { name: 'Doanh thu thuần', value: fSignedPct(r.revG), level: atLeast(r.revG, 0.1, 0), note: 'Năm nay so với năm trước. Tham khảo: từ 10% trở lên là tốt.' },
+        { name: 'LNST của cổ đông công ty mẹ', value: niValue, level: niLevel, note: 'Năm nay so với năm trước. Xem lợi nhuận tăng nhờ kinh doanh chính hay nhờ khoản một lần.' },
+      ] },
+      { title: 'Khả năng sinh lời', rows: [
+        margin('Biên lợi nhuận gộp', r.gm, 'LN gộp / DT thuần.'),
+        margin('Biên lợi nhuận cốt lõi', r.cm, '(LN gộp − CP bán hàng − CP QLDN) / DT thuần.'),
+        margin('Biên lợi nhuận ròng', r.nm, 'LNST / DT thuần.'),
+        { name: 'ROE', value: fPct(r.roe), level: atLeast(r.roe, 0.15, 0.1), note: 'LNST / VCSH bình quân. Tham khảo: từ 15% là tốt, 10–15% là trung bình.' + avgNote(r.eqAvgUsed) },
+        { name: 'ROA', value: fPct(r.roa), level: atLeast(r.roa, 0.1, 0.05), note: 'LNST / Tổng tài sản bình quân. Tham khảo: từ 10% là tốt, 5–10% là trung bình.' + avgNote(r.taAvgUsed) },
+      ] },
+      { title: 'Sức khỏe tài chính', rows: [
+        { name: 'Thanh toán hiện hành', value: fX(r.cr), level: atLeast(r.cr, 1.5, 1), note: 'TS ngắn hạn / Nợ ngắn hạn. Tham khảo: từ 1,5 là tốt, dưới 1 cần chú ý.' },
+        { name: 'Thanh toán nhanh', value: fX(r.qr), level: atLeast(r.qr, 1, 0.5), note: '(TS ngắn hạn − Hàng tồn kho) / Nợ ngắn hạn. Tham khảo: từ 1 là tốt, dưới 0,5 cần chú ý.' },
+        { name: 'Nợ vay / VCSH', value: fX(r.de), level: atMost(r.de, 0.5, 1), note: '(Vay ngắn hạn + Vay dài hạn) / VCSH. Tham khảo: đến 0,5 là an toàn, trên 1 là cao.' },
+        { name: 'Nợ phải trả / Tổng tài sản', value: fPct(r.la), level: 'info', note: 'Gồm cả các khoản nợ không mất lãi như phải trả người bán, người mua trả tiền trước.' },
+        { name: 'Nợ vay ròng', value: fTy(r.netDebt) + (r.netDebt < 0 ? '<small>tiền mặt ròng</small>' : ''), level: r.netDebt < 0 ? 'good' : 'info', note: 'Nợ vay − Tiền − Đầu tư tài chính ngắn hạn. Số âm nghĩa là tiền nhiều hơn nợ vay.' },
+        { name: 'Khả năng trả lãi vay', value: r.icr === Infinity ? 'Không có lãi vay' : fX(r.icr, 1), level: r.icr === Infinity ? 'good' : atLeast(r.icr, 5, 3), note: '(LN trước thuế + Chi phí lãi vay) / Chi phí lãi vay. Tham khảo: từ 5 là an toàn, dưới 3 cần chú ý.' },
+      ] },
+      { title: 'Hiệu quả hoạt động', rows: [
+        { name: 'Vòng quay hàng tồn kho', value: fTurn(r.invTurn) + (isNum(r.invDays) ? `<small>${fDays(r.invDays)} tồn kho</small>` : ''), level: 'info', note: 'Giá vốn / HTK bình quân; số ngày tồn kho = 365 / vòng quay. So với các năm trước và với ngành.' },
+        { name: 'Vòng quay phải thu', value: fTurn(r.recvTurn) + (isNum(r.dso) ? `<small>${fDays(r.dso)} thu tiền</small>` : ''), level: 'info', note: 'DT thuần / Phải thu bình quân; số ngày thu tiền = 365 / vòng quay.' },
+        { name: 'Vòng quay tổng tài sản', value: fTurn(r.assetTurn, 2), level: 'info', note: 'DT thuần / Tổng tài sản bình quân.' },
+        { name: 'Phải thu và tồn kho so với doanh thu', value: `Phải thu ${fSignedPct(r.recvG)}<small>Tồn kho ${fSignedPct(r.invG)}</small><small>Doanh thu ${fSignedPct(r.revG)}</small>`, level: gapLevel, text: GAP_TEXT[gapLevel], note: 'Tốc độ tăng trong năm. Phải thu hoặc tồn kho tăng nhanh hơn doanh thu nhiều là dấu hiệu cần kiểm tra.' },
+      ] },
+      { title: 'Dòng tiền', rows: [
+        cfoRow,
+        { name: 'Dòng tiền tự do (FCF)', value: fTy(r.fcf), level: fcfLevel, text: fcfLevel === 'ok' ? 'Âm' : undefined, note: 'CFO − Tiền chi mua sắm tài sản cố định. Âm có thể do đang đầu tư mở rộng; xem dự án có tạo ra tăng trưởng không.' },
+        divRow,
+      ] },
+      { title: 'Trên mỗi cổ phiếu và định giá', rows: [
+        { name: 'EPS', value: fDong(r.eps), level: 'info', note: 'LNST của cổ đông công ty mẹ / Số cổ phiếu. EPS trên BCTC có thể thấp hơn một chút vì đã trừ quỹ khen thưởng, phúc lợi.' },
+        { name: 'Giá trị sổ sách mỗi cổ phiếu (BVPS)', value: fDong(r.bvps), level: 'info', note: 'VCSH / Số cổ phiếu.' },
+        { name: 'P/E', value: r.eps <= 0 ? 'Không có ý nghĩa (lỗ)' : fX(r.pe, 1), level: 'info', note: `Giá / EPS. Lợi suất lợi nhuận E/P = ${fPct(r.ey)}, so với lãi tiết kiệm ${fPct(s.deposit / 100)}. So với lịch sử của doanh nghiệp và với ngành.` },
+        { name: 'PEG', value: fNum(r.peg, 2), level: 'info', note: 'P/E / Tăng trưởng LNST (tính bằng số %). Dưới 1 thường được coi là hấp dẫn nếu tăng trưởng bền vững.' },
+        { name: 'P/B', value: fX(r.pb), level: 'info', note: 'Giá / BVPS. Xem cùng ROE, vì P/B = P/E × ROE.' },
+        { name: 'Lợi suất cổ tức', value: fPct(r.dy), level: 'info', note: 'Cổ tức tiền mặt mỗi cổ phiếu / Giá.' },
+        { name: 'Tỷ lệ chi trả cổ tức', value: fPct(r.payout, 0), level: r.payout > 1 ? 'bad' : 'info', note: 'Cổ tức mỗi cổ phiếu / EPS. Trên 100% nghĩa là trả nhiều hơn lợi nhuận làm ra.' },
+        { name: 'Vốn hóa thị trường', value: fTy(r.mcap), level: 'info', note: 'Giá × Số cổ phiếu.' },
+        { name: 'EV / EBITDA', value: fX(r.evEbitda, 1), level: 'info', note: `EV = Vốn hóa + Nợ vay − Tiền và đầu tư ngắn hạn = ${fTy(r.ev)}. EBITDA = LN trước thuế + Lãi vay + Khấu hao = ${fTy(r.ebitda)}.` },
+      ] },
+    ];
+  }
+
+  function buildFlags(s, r) {
+    const C = (k) => s[k][1];
+    const P = (k) => s[k][0];
+    const good = [];
+    const warn = [];
+    const danger = [];
+    const ni = C('ni');
+    const cfo = C('cfo');
+
+    if (isNum(C('eq')) && C('eq') <= 0) danger.push('Vốn chủ sở hữu âm: doanh nghiệp đã lỗ hết vốn của cổ đông.');
+    if (isNum(ni) && ni <= 0) danger.push(`Doanh nghiệp lỗ ${fTy(Math.abs(ni))} trong năm.`);
+    else if (r.niG < -0.3) warn.push(`Lợi nhuận giảm ${fPct(-r.niG)} so với năm trước. Đọc văn bản giải trình của doanh nghiệp để tìm nguyên nhân.`);
+    if (ni > 0 && cfo < 0) danger.push(`Có lãi (${fTy(ni)}) nhưng dòng tiền kinh doanh âm (${fTy(cfo)}): lợi nhuận chưa thành tiền. Xem phải thu và hàng tồn kho.`);
+    if (P('cfo') < 0 && cfo < 0) danger.push('Dòng tiền kinh doanh âm 2 năm liên tiếp.');
+
+    const change = (x) => (x < 0 ? `giảm ${fPct(-x)}` : `tăng ${fPct(x)}`);
+    const recvGap = r.recvG - r.revG;
+    const invGap = r.invG - r.revG;
+    if (recvGap > 0.2) danger.push(`Phải thu ${change(r.recvG)} trong khi doanh thu ${change(r.revG)}. Kiểm tra thuyết minh phải thu: khách hàng nào, có bên liên quan không?`);
+    else if (recvGap > 0.05) warn.push(`Phải thu ${change(r.recvG)}, nhanh hơn doanh thu (${change(r.revG)}). Theo dõi chính sách bán chịu và khả năng thu tiền.`);
+    if (invGap > 0.2) danger.push(`Hàng tồn kho ${change(r.invG)} trong khi doanh thu ${change(r.revG)}. Hàng có khó bán không? Đã trích dự phòng giảm giá chưa?`);
+    else if (invGap > 0.05) warn.push(`Hàng tồn kho ${change(r.invG)}, nhanh hơn doanh thu (${change(r.revG)}).`);
+
+    if (isNum(r.icr) && r.icr !== Infinity) {
+      if (r.icr < 1) danger.push(`Lợi nhuận trước lãi vay và thuế không đủ trả lãi vay (khả năng trả lãi ${fX(r.icr, 1)}).`);
+      else if (r.icr < 1.5) danger.push(`Khả năng trả lãi vay chỉ ${fX(r.icr, 1)}: lợi nhuận gần như chỉ đủ trả lãi.`);
+      else if (r.icr < 3) warn.push(`Khả năng trả lãi vay ${fX(r.icr, 1)}, ở mức thấp.`);
+    }
+    if (r.cr < 1) warn.push(`Hệ số thanh toán hiện hành ${fX(r.cr)}: nợ ngắn hạn lớn hơn tài sản ngắn hạn.`);
+    if (isNum(C('std')) && isNum(r.liquid) && C('std') > r.liquid) {
+      warn.push(`Vay ngắn hạn (${fTy(C('std'))}) lớn hơn tiền và đầu tư ngắn hạn (${fTy(r.liquid)}): doanh nghiệp phụ thuộc vào việc vay mới để trả nợ cũ.`);
+    }
+    if (r.de > 2) danger.push(`Nợ vay gấp ${fX(r.de)} vốn chủ sở hữu.`);
+    else if (r.de > 1) warn.push(`Nợ vay / VCSH = ${fX(r.de)}, ở mức cao đối với doanh nghiệp phi tài chính.`);
+
+    const gmDelta = r.gm[1] - r.gm[0];
+    if (gmDelta <= -0.03) warn.push(`Biên lợi nhuận gộp giảm ${fNum(-gmDelta * 100, 1)} điểm % so với năm trước.`);
+    if (isNum(r.core) && C('ebt') > 0) {
+      if (r.core < 0) danger.push(`Kinh doanh chính lỗ (lợi nhuận cốt lõi ${fTy(r.core)}) nhưng tổng thể vẫn có lãi trước thuế: lợi nhuận đến từ các hoạt động khác.`);
+      else if ((C('ebt') - r.core) / C('ebt') > 0.5) warn.push(`Hơn một nửa lợi nhuận trước thuế đến từ ngoài kinh doanh chính (lợi nhuận cốt lõi ${fTy(r.core)}, LN trước thuế ${fTy(C('ebt'))}). Những khoản này thường khó lặp lại.`);
+    }
+    if (r.fcf < 0) warn.push(`Dòng tiền tự do âm (${fTy(r.fcf)}): doanh nghiệp chi đầu tư nhiều hơn tiền kinh doanh làm ra. Xem dự án có tạo ra tăng trưởng không.`);
+    if (r.divTotal > 0 && isNum(r.fcf) && r.fcf < r.divTotal) warn.push(`Cổ tức tiền mặt (khoảng ${fTy(r.divTotal)}) lớn hơn dòng tiền tự do (${fTy(r.fcf)}).`);
+    if (r.payout > 1) warn.push(`Cổ tức mỗi cổ phiếu cao hơn EPS (tỷ lệ chi trả ${fPct(r.payout, 0)}).`);
+    if (r.roe >= 0.15 && r.lev > 3) warn.push(`ROE cao (${fPct(r.roe)}) nhưng tài sản gấp ${fX(r.lev, 1)} vốn chủ: ROE phụ thuộc nhiều vào đòn bẩy.`);
+
+    if (ni > 0 && cfo >= ni) good.push(`Dòng tiền kinh doanh (${fTy(cfo)}) không thấp hơn lợi nhuận (${fTy(ni)}): lợi nhuận có chất lượng.`);
+    if (r.roe >= 0.15 && r.de <= 0.5) good.push(`ROE ${fPct(r.roe)} trong khi nợ vay chỉ bằng ${fX(r.de)} vốn chủ: sinh lời cao mà không nhờ vay nợ.`);
+    if (r.revG >= 0.1 && r.niG >= 0.1) good.push(`Doanh thu (${fSignedPct(r.revG)}) và lợi nhuận (${fSignedPct(r.niG)}) cùng tăng trưởng từ 10% trở lên.`);
+    if (r.netDebt < 0) good.push(`Tiền mặt ròng ${fTy(-r.netDebt)}: tiền và đầu tư ngắn hạn nhiều hơn nợ vay.`);
+    if (r.icr === Infinity) good.push('Không có chi phí lãi vay.');
+    else if (r.icr >= 5) good.push(`Lợi nhuận trước lãi vay và thuế gấp ${fX(r.icr, 1)} chi phí lãi vay.`);
+    if (r.divTotal > 0 && r.fcf >= r.divTotal) good.push('Cổ tức tiền mặt được trả bằng dòng tiền tự do.');
+    if (gmDelta >= 0.01) good.push(`Biên lợi nhuận gộp cải thiện ${fNum(gmDelta * 100, 1)} điểm %.`);
+
+    return { good, warn, danger };
+  }
+
+  function buildValuation(s, r) {
+    if (!(r.eps > 0) || !(s.price > 0)) return { error: 'Cần giá cổ phiếu, số cổ phiếu và lợi nhuận dương để định giá theo P/E.' };
+    const rows = SCENARIOS.map(([k, name]) => {
+      const g = s['g_' + k] / 100;
+      const pe = s['pe_' + k];
+      const eps = r.eps * (1 + g);
+      const value = eps * pe;
+      return { name, w: s['w_' + k], eps, value, diff: value / s.price - 1 };
+    });
+    const valid = rows.filter((x) => isNum(x.w) && x.w >= 0 && isNum(x.value));
+    const wSum = valid.reduce((a, x) => a + x.w, 0);
+    const expected = wSum > 0 ? valid.reduce((a, x) => a + x.w * x.value, 0) / wSum : NaN;
+    const mos = s.mos / 100;
+    const maxBuy = isNum(rows[1].value) && isNum(mos) ? rows[1].value * (1 - mos) : NaN;
+    return { rows, wSum, expected, expDiff: expected / s.price - 1, maxBuy, mos, price: s.price };
+  }
+
+  // ---------- Hiển thị ----------
+  function render() {
+    const s = readAll();
+    const r = compute(s);
+
+    $('input-notes').innerHTML = s.notes.map((t) => `<p class="note">${esc(t)}</p>`).join('');
+
+    if (!r.hasData) {
+      const empty = '<p class="muted">Nhập số liệu, hoặc bấm "Nạp ví dụ Công ty ABC" để xem kết quả.</p>';
+      for (const id of ['kpis', 'flags', 'ratios', 'dupont', 'valuation']) $(id).innerHTML = id === 'kpis' ? '' : empty;
+      return;
+    }
+
+    const kpis = [
+      ['P/E', r.eps <= 0 ? 'Lỗ' : fX(r.pe, 1), 'info'],
+      ['P/B', fX(r.pb), 'info'],
+      ['ROE', fPct(r.roe), atLeast(r.roe, 0.15, 0.1)],
+      ['Nợ vay / VCSH', fX(r.de), atMost(r.de, 0.5, 1)],
+      ['CFO / LNST', fX(r.cfoNi), cfoLevel(s, r)],
+      ['Lợi suất cổ tức', fPct(r.dy), 'info'],
+    ];
+    $('kpis').innerHTML = kpis.map(([l, v, level]) =>
+      `<div class="kpi"><div class="l">${l}</div><div class="v">${v}</div>${level !== 'info' ? badge(level) : ''}</div>`).join('');
+
+    const f = buildFlags(s, r);
+    let fh = `<p class="muted">${f.good.length} điểm sáng · ${f.warn.length} lưu ý · ${f.danger.length} dấu hiệu nguy hiểm</p><h3>Cảnh báo</h3>`;
+    fh += f.danger.length || f.warn.length
+      ? '<ul class="flags">' + f.danger.map((t) => `<li class="bad"><b>Nguy hiểm:</b> ${t}</li>`).join('') +
+        f.warn.map((t) => `<li class="ok"><b>Lưu ý:</b> ${t}</li>`).join('') + '</ul>'
+      : '<p>Không phát hiện dấu hiệu cảnh báo nào trong các phép kiểm tra tự động.</p>';
+    fh += '<h3>Điểm sáng</h3>' + (f.good.length
+      ? '<ul class="flags">' + f.good.map((t) => `<li class="good">${t}</li>`).join('') + '</ul>'
+      : '<p class="muted">Chưa có điểm sáng nổi bật.</p>');
+    fh += '<p class="note">Công cụ chỉ kiểm tra được một phần các dấu hiệu. Hãy đọc thêm thuyết minh BCTC và Bài 5 của cẩm nang.</p>';
+    $('flags').innerHTML = fh;
+
+    $('ratios').innerHTML = buildRows(s, r).map((g) =>
+      `<h3>${g.title}</h3><div class="scroll"><table><thead><tr><th scope="col">Chỉ số</th><th scope="col" class="num">Giá trị và đánh giá</th></tr></thead><tbody>` +
+      g.rows.map((row) => `<tr><td><span class="ratio-name">${row.name}</span><small>${row.note}</small></td>` +
+        `<td class="num"><div class="val">${row.value}</div>${badge(row.level, row.text)}</td></tr>`).join('') +
+      '</tbody></table></div>').join('');
+
+    let dupontNote = 'Nhập đủ doanh thu, LNST, tổng tài sản và VCSH để phân tích.';
+    if (isNum(r.roe) && isNum(r.lev)) {
+      if (r.lev > 3) dupontNote = 'ROE phụ thuộc nhiều vào đòn bẩy (vay nợ). ROE kiểu này giảm nhanh khi kinh doanh gặp khó khăn.';
+      else if (r.nm[1] >= 0.1) dupontNote = 'ROE chủ yếu đến từ biên lợi nhuận cao, nguồn ROE có chất lượng nếu biên lợi nhuận bền vững.';
+      else if (r.assetTurn >= 1.5) dupontNote = 'ROE chủ yếu đến từ vòng quay tài sản cao (bán nhiều, lãi mỗi sản phẩm mỏng), thường thấy ở bán lẻ, phân phối.';
+      else dupontNote = 'Không có thành phần nào nổi trội. So sánh từng thành phần với doanh nghiệp cùng ngành.';
+    }
+    $('dupont').innerHTML = '<div class="scroll"><table><thead><tr><th scope="col">Thành phần</th><th scope="col" class="num">Giá trị</th></tr></thead><tbody>' +
+      `<tr><td>Biên lợi nhuận ròng<small>LNST / DT thuần</small></td><td class="num">${fPct(r.nm[1])}</td></tr>` +
+      `<tr><td>× Vòng quay tổng tài sản<small>DT thuần / Tổng tài sản bình quân</small></td><td class="num">${fX(r.assetTurn, 3)}</td></tr>` +
+      `<tr><td>× Đòn bẩy tài chính<small>Tổng tài sản bình quân / VCSH bình quân</small></td><td class="num">${fX(r.lev, 3)}</td></tr>` +
+      `<tr><td><b>= ROE</b></td><td class="num"><b>${fPct(r.roe)}</b></td></tr></tbody></table></div>` +
+      `<p class="note">${dupontNote}</p>`;
+
+    const v = buildValuation(s, r);
+    if (v.error) {
+      $('valuation').innerHTML = `<p class="muted">${v.error}</p>`;
+    } else {
+      let vh = '<div class="scroll"><table><thead><tr><th scope="col">Kịch bản</th><th scope="col" class="num">EPS dự phóng</th>' +
+        '<th scope="col" class="num">Giá trị mỗi cổ phiếu</th><th scope="col" class="num">So với giá hiện tại</th></tr></thead><tbody>';
+      vh += v.rows.map((x) => `<tr><td>${x.name}</td><td class="num">${fDong(x.eps)}</td><td class="num">${fDong(x.value)}</td><td class="num">${fSignedPct(x.diff)}</td></tr>`).join('');
+      vh += `<tr><td><b>Kỳ vọng</b><small>bình quân theo xác suất</small></td><td></td><td class="num"><b>${fDong(v.expected)}</b></td><td class="num"><b>${fSignedPct(v.expDiff)}</b></td></tr>`;
+      vh += '</tbody></table></div>';
+      const totalW = SCENARIOS.reduce((a, [k]) => a + (isNum(s['w_' + k]) ? s['w_' + k] : 0), 0);
+      if (isNum(v.expected) && Math.abs(totalW - 100) > 0.01) vh += `<p class="note">Tổng xác suất bạn nhập là ${fNum(totalW, 1)}%; công cụ đã quy đổi về 100%.</p>`;
+      if (isNum(v.maxBuy)) {
+        vh += `<p>Giá mua tối đa với biên an toàn ${fPct(v.mos, 0)} so với kịch bản cơ sở: <b>${fDong(v.maxBuy)}</b></p>`;
+        vh += v.price <= v.maxBuy
+          ? `<div class="banner good">Giá hiện tại (${fDong(v.price)}) thấp hơn giá mua tối đa: đạt biên an toàn ${fPct(v.mos, 0)} theo các giả định bạn nhập.</div>`
+          : `<div class="banner ok">Giá hiện tại (${fDong(v.price)}) cao hơn giá mua tối đa ${fPct(v.price / v.maxBuy - 1)}: chưa đạt biên an toàn ${fPct(v.mos, 0)} bạn đặt ra. Có thể chờ giá thấp hơn, hoặc chỉ mua một phần nhỏ.</div>`;
+      }
+      vh += '<p class="note">Kết quả hoàn toàn phụ thuộc vào giả định bạn nhập, không phải khuyến nghị mua hay bán.</p>';
+      $('valuation').innerHTML = vh;
+    }
+  }
+
+  // ---------- Lưu trữ và sự kiện ----------
+  const persistEls = () => Array.from(document.querySelectorAll('.persist'));
+
+  function save() {
+    try {
+      const data = {};
+      for (const el of persistEls()) data[el.id] = el.value;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e) { /* Trình duyệt không cho lưu: bỏ qua. */ }
+  }
+
+  function restore() {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (!data) return false;
+      for (const el of persistEls()) if (typeof data[el.id] === 'string') el.value = data[el.id];
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function fill(values) {
+    for (const [k, v] of Object.entries(values)) {
+      if (Array.isArray(v)) { $(k + '_0').value = fInput(v[0]); $(k + '_1').value = fInput(v[1]); }
+      else if ($(k)) $(k).value = fInput(v);
+    }
+  }
+
+  function setBanner(text) {
+    const b = $('banner');
+    b.hidden = !text;
+    b.textContent = text || '';
+  }
+
+  function clearInputs() {
+    for (const el of document.querySelectorAll('input.field')) el.value = '';
+    fill(ASSUMPTION_DEFAULTS);
+  }
+
+  function loadExample() {
+    clearInputs();
+    $('unit').value = '1e9';
+    fill(EXAMPLE);
+    setBanner('Đang hiển thị ví dụ Công ty ABC (giả định), khớp với số liệu trong Bài 2–4 của cẩm nang. Đơn vị: tỷ đồng.');
+    update();
+  }
+
+  let timer = 0;
+  function update() { render(); save(); }
+  function scheduleUpdate() { clearTimeout(timer); timer = setTimeout(update, 150); }
+
+  buildInputs();
+  $('btn-example').addEventListener('click', loadExample);
+  $('btn-clear').addEventListener('click', () => { clearInputs(); setBanner(''); update(); });
+  document.addEventListener('input', (e) => { if (e.target.classList && e.target.classList.contains('persist')) { setBanner(''); scheduleUpdate(); } });
+  document.addEventListener('change', (e) => { if (e.target.id === 'unit') { setBanner(''); update(); } });
+  document.addEventListener('focusout', (e) => {
+    const el = e.target;
+    if (!el.classList || !el.classList.contains('field')) return;
+    const v = parseNum(el.value);
+    if (isNum(v)) el.value = fInput(v);
+  });
+
+  if (restore()) update();
+  else loadExample();
+})();
+</script>
+</body>
+</html>
