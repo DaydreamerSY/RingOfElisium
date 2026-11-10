@@ -114,4 +114,4 @@ Tài liệu nước ngoài, báo cáo phân tích và các trang dữ liệu dù
 
 ---
 
-[← Bài 7: Checklist và nhật ký đầu tư](07-checklist-va-nhat-ky.md) · [Mục lục](README.md)
+[← Bài 7: Checklist và nhật ký đầu tư](07-checklist-va-nhat-ky.md) · [Mục lục](README.md) · [Bài 9: Thực hành với BCTC thật →](09-vi-du-thuc-te.md)

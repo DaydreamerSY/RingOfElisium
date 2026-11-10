@@ -21,7 +21,7 @@ Tránh được một khoản lỗ lớn quan trọng không kém việc tìm đ
 | 13 | **Lợi thế thương mại, tài sản vô hình** lớn so với VCSH | Có thể phải ghi giảm (gây lỗ) nếu các thương vụ mua lại không hiệu quả | Báo cáo tình hình tài chính, thuyết minh |
 
 > [!TIP]
-> [Công cụ phân tích](cong-cu/phan-tich-bctc.html) tự động kiểm tra một số dấu hiệu trong bảng trên (1, 2, 4, 5, 6, 7, 11) khi bạn nhập số liệu.
+> [Công cụ phân tích](cong-cu/phan-tich-bctc.html) tự động kiểm tra một số dấu hiệu trong bảng trên (1, 2, 4, 5, 6, 7, 8, 11) khi bạn nhập số liệu. [Bài 9](09-vi-du-thuc-te.md#4-novaland-nvl-dấu-hiệu-cảnh-báo-xuất-hiện-từ-sớm) đối chiếu từng dấu hiệu với BCTC thật của Novaland giai đoạn 2019–2025.
 
 ## 2. Ngoài báo cáo tài chính
 

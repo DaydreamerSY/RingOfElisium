@@ -273,6 +273,9 @@ Người mới nên bắt đầu với **doanh nghiệp sản xuất, tiêu dùn
 
 ## 10. Bài tập
 
+> [!TIP]
+> Trước khi tự làm, hãy xem [Bài 9](09-vi-du-thuc-te.md): đọc BCTC thật của Vinamilk, FPT, Hòa Phát và Novaland theo đúng trình tự ở bài này.
+
 1. Chọn một doanh nghiệp niêm yết mà bạn dùng sản phẩm. Tải BCTC hợp nhất đã kiểm toán của năm gần nhất.
 2. Ghi lại ý kiến kiểm toán.
 3. Lập bảng 5 năm gồm: doanh thu thuần, LN gộp, LNST của cổ đông công ty mẹ, tổng tài sản, nợ vay, VCSH, CFO, tiền chi mua sắm tài sản cố định.

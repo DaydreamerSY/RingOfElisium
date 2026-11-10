@@ -74,6 +74,7 @@
   ul.flags li { padding: 8px 10px; border-radius: 8px; margin-bottom: 6px; }
   .banner { padding: 8px 12px; border-radius: 8px; margin: 8px 0; }
   .ratio-name { font-weight: 600; }
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   footer { font-size: .85rem; color: var(--muted); padding-bottom: 32px; }
 </style>
 </head>
@@ -88,11 +89,20 @@
       <li>Chọn đúng <b>đơn vị</b> của số liệu bạn nhập. BCTC gốc thường ghi bằng đồng; các trang dữ liệu thường dùng tỷ đồng hoặc triệu đồng.</li>
       <li>Có thể gõ <code>4.500</code> hoặc <code>4500</code>; số thập phân dùng dấu phẩy (<code>1,5</code>); số âm gõ <code>-100</code> hoặc <code>(100)</code>. Các khoản chi phí luôn được hiểu là số dương.</li>
       <li>Cột "Năm trước" có thể bỏ trống; khi đó công cụ dùng số cuối năm và không tính tăng trưởng.</li>
+      <li>Muốn xem trước một ví dụ? Chọn trong danh sách "Ví dụ doanh nghiệp thật" để nạp số liệu BCTC 2024–2025 đã kiểm toán của Vinamilk, FPT, Hòa Phát hoặc Novaland, rồi nhập giá cổ phiếu hiện tại.</li>
       <li>Đọc kết quả như những <b>câu hỏi cần tìm hiểu thêm</b>, không phải kết luận. Ngưỡng đánh giá chỉ dành cho doanh nghiệp phi tài chính.</li>
     </ol>
   </details>
   <div class="actions">
     <button type="button" class="primary" id="btn-example">Nạp ví dụ Công ty ABC</button>
+    <label for="preset" class="visually-hidden">Ví dụ doanh nghiệp thật</label>
+    <select id="preset">
+      <option value="">Ví dụ doanh nghiệp thật…</option>
+      <option value="vnm">Vinamilk (VNM) – BCTC 2025</option>
+      <option value="fpt">FPT – BCTC 2025</option>
+      <option value="hpg">Hòa Phát (HPG) – BCTC 2025</option>
+      <option value="nvl">Novaland (NVL) – BCTC 2025</option>
+    </select>
     <button type="button" id="btn-clear">Xóa trắng</button>
     <label for="unit">Đơn vị số liệu BCTC:</label>
     <select id="unit" class="persist">
@@ -181,11 +191,12 @@
       ['cfo', 'Lưu chuyển tiền thuần từ hoạt động kinh doanh', 'có thể âm'],
       ['capex', 'Tiền chi mua sắm, xây dựng tài sản cố định'],
       ['da', 'Khấu hao tài sản cố định', 'trong phần điều chỉnh của báo cáo'],
+      ['intpaid', 'Tiền lãi vay đã trả', 'có thể lớn hơn chi phí lãi vay nếu lãi được vốn hóa vào tài sản'],
     ]},
   ];
 
   const SCENARIOS = [['bear', 'Bi quan'], ['base', 'Cơ sở'], ['bull', 'Lạc quan']];
-  const EXPENSE_KEYS = ['cogs', 'selling', 'admin', 'interest', 'capex', 'da'];
+  const EXPENSE_KEYS = ['cogs', 'selling', 'admin', 'interest', 'capex', 'da', 'intpaid'];
   const NEGATIVE_OK = new Set(['ebt', 'ni', 'eq', 'cfo', 'g_bear', 'g_base', 'g_bull']);
 
   const ASSUMPTION_DEFAULTS = {
@@ -203,7 +214,44 @@
     interest: [55, 60], ebt: [625, 725], ni: [500, 580],
     cash: [450, 500], sti: [200, 300], recv: [500, 600], inv: [850, 900], ca: [2100, 2400],
     ta: [4550, 5000], cl: [1400, 1500], std: [450, 500], ltd: [350, 400], tl: [1850, 2000], eq: [2700, 3000],
-    cfo: [null, 660], capex: [null, 400], da: [null, 250],
+    cfo: [null, 660], capex: [null, 400], da: [null, 250], intpaid: [null, 60],
+  };
+
+  // Số liệu thật đọc từ BCTC hợp nhất đã kiểm toán năm 2025 (cột năm trước là 2024), đơn vị tỷ đồng.
+  // Giá cổ phiếu để trống để người dùng tự nhập giá hiện tại. Phân tích chi tiết ở Bài 9 của cẩm nang.
+  const PRESETS = {
+    vnm: { label: 'Vinamilk (VNM)', data: {
+      shares: 2089.96, dps: 4350,
+      rev: [61782.6, 63645.9], cogs: [36192.4, 37436.4], selling: [13357.7, 13641.7], admin: [1827.9, 1904.1],
+      interest: [279.4, 325.8], ebt: [11599.7, 11650.0], ni: [9392.3, 9410.2],
+      cash: [2225.9, 1794.9], sti: [23260.1, 21354.9], recv: [6233.8, 6027.7], inv: [5686.8, 6839.3], ca: [37553.7, 36261.2],
+      ta: [55049.1, 53312.4], cl: [18459.5, 18520.3], std: [9115.4, 9393.7], ltd: [157.9, 62.9], tl: [18874.7, 18829.4], eq: [32278.8, 30685.4],
+      cfo: [9685.9, 8668.1], capex: [1741.5, 1762.0], da: [2095.2, 2116.2], intpaid: [336.7, 311.5],
+    } },
+    fpt: { label: 'FPT', data: {
+      shares: 1703.51, dps: 2000,
+      rev: [62848.8, 70112.8], cogs: [39150.4, 44224.3], selling: [6116.0, 7562.7], admin: [7074.0, 7337.3],
+      interest: [551.6, 809.8], ebt: [11069.7, 13043.6], ni: [7856.8, 9376.1],
+      cash: [9315.4, 10522.1], sti: [21785.2, 29631.0], recv: [11381.5, 14402.0], inv: [1856.8, 2193.8], ca: [45535.9, 58137.4],
+      ta: [72000.0, 88142.0], cl: [34836.2, 41524.9], std: [14446.2, 19169.7], ltd: [501.1, 1903.8], tl: [36272.5, 44394.0], eq: [29794.2, 36482.9],
+      cfo: [11703.8, 10136.0], capex: [3275.3, 5097.9], da: [2535.3, 2914.2], intpaid: [607.2, 812.5],
+    } },
+    hpg: { label: 'Hòa Phát (HPG)', data: {
+      shares: 7675.47, dps: 0,
+      rev: [138855.1, 156116.1], cogs: [120357.6, 131618.3], selling: [2337.3, 2633.6], admin: [1545.5, 1436.5],
+      interest: [2287.4, 3114.9], ebt: [13693.5, 18040.6], ni: [12021.4, 15453.2],
+      cash: [6887.6, 8300.9], sti: [18974.7, 19484.4], recv: [7647.8, 15042.3], inv: [46091.2, 52828.2], ca: [86674.3, 103659.4],
+      ta: [224489.7, 257899.2], cl: [75225.2, 94186.3], std: [55882.7, 64695.0], ltd: [27080.4, 27479.2], tl: [109842.2, 126679.2], eq: [114356.5, 129181.0],
+      cfo: [6608.3, 17365.9], capex: [35495.0, 25748.3], da: [6928.0, 8470.7], intpaid: [2332.4, 2884.2],
+    } },
+    nvl: { label: 'Novaland (NVL)', data: {
+      shares: 2232.02, dps: 0,
+      rev: [9073.4, 6965.7], cogs: [8989.8, 2540.5], selling: [534.0, 611.3], admin: [1449.9, 1289.6],
+      interest: [291.4, 148.5], ebt: [-2555.7, 3027.2], ni: [-6454.8, 1743.7],
+      cash: [4607.6, 4395.5], sti: [31.3, null], recv: [54813.4, 46997.6], inv: [146607.4, 153324.0], ca: [207831.1, 206852.3],
+      ta: [237778.0, 249907.8], cl: [107222.4, 95990.8], std: [36978.2, 31718.0], ltd: [24587.7, 35672.7], tl: [190487.0, 191014.9], eq: [37833.7, 45339.2],
+      cfo: [-5971.2, -6145.4], capex: [5.7, 23.8], da: [1553.0, null], intpaid: [1697.6, 2636.8],
+    } },
   };
 
   const $ = (id) => document.getElementById(id);
@@ -354,6 +402,9 @@
     r.netDebt = r.debt - r.liquid;
     const interest = C('interest');
     r.icr = !isNum(interest) ? NaN : interest === 0 ? Infinity : div(C('ebt') + interest, interest);
+    // Lãi vay được vốn hóa vào tài sản không hiện trên KQKD; dùng tiền lãi thực trả để kiểm tra lại.
+    r.intPaid = C('intpaid');
+    r.icrCash = r.intPaid > 0 && isNum(C('ebt')) ? (C('ebt') + (isNum(interest) ? interest : 0)) / r.intPaid : NaN;
     r.invTurn = div(C('cogs'), avg('inv'));
     r.invDays = div(365, r.invTurn);
     r.recvTurn = div(C('rev'), avg('recv'));
@@ -448,6 +499,7 @@
         { name: 'Nợ phải trả / Tổng tài sản', value: fPct(r.la), level: 'info', note: 'Gồm cả các khoản nợ không mất lãi như phải trả người bán, người mua trả tiền trước.' },
         { name: 'Nợ vay ròng', value: fTy(r.netDebt) + (r.netDebt < 0 ? '<small>tiền mặt ròng</small>' : ''), level: r.netDebt < 0 ? 'good' : 'info', note: 'Nợ vay − Tiền − Đầu tư tài chính ngắn hạn. Số âm nghĩa là tiền nhiều hơn nợ vay.' },
         { name: 'Khả năng trả lãi vay', value: r.icr === Infinity ? 'Không có lãi vay' : fX(r.icr, 1), level: r.icr === Infinity ? 'good' : atLeast(r.icr, 5, 3), note: '(LN trước thuế + Chi phí lãi vay) / Chi phí lãi vay. Tham khảo: từ 5 là an toàn, dưới 3 cần chú ý.' },
+        { name: 'Khả năng trả lãi theo tiền lãi thực trả', value: fX(r.icrCash, 1), level: atLeast(r.icrCash, 5, 3), note: '(LN trước thuế + Chi phí lãi vay) / Tiền lãi vay đã trả (báo cáo lưu chuyển tiền tệ). Thấp hơn nhiều so với dòng trên nghĩa là phần lớn lãi vay đang được vốn hóa vào tài sản.' },
       ] },
       { title: 'Hiệu quả hoạt động', rows: [
         { name: 'Vòng quay hàng tồn kho', value: fTurn(r.invTurn) + (isNum(r.invDays) ? `<small>${fDays(r.invDays)} tồn kho</small>` : ''), level: 'info', note: 'Giá vốn / HTK bình quân; số ngày tồn kho = 365 / vòng quay. So với các năm trước và với ngành.' },
@@ -493,14 +545,20 @@
     const recvGap = r.recvG - r.revG;
     const invGap = r.invG - r.revG;
     if (recvGap > 0.2) danger.push(`Phải thu ${change(r.recvG)} trong khi doanh thu ${change(r.revG)}. Kiểm tra thuyết minh phải thu: khách hàng nào, có bên liên quan không?`);
-    else if (recvGap > 0.05) warn.push(`Phải thu ${change(r.recvG)}, nhanh hơn doanh thu (${change(r.revG)}). Theo dõi chính sách bán chịu và khả năng thu tiền.`);
+    else if (recvGap > 0.05) warn.push(`Phải thu ${change(r.recvG)} trong khi doanh thu ${change(r.revG)}. Theo dõi chính sách bán chịu và khả năng thu tiền.`);
     if (invGap > 0.2) danger.push(`Hàng tồn kho ${change(r.invG)} trong khi doanh thu ${change(r.revG)}. Hàng có khó bán không? Đã trích dự phòng giảm giá chưa?`);
-    else if (invGap > 0.05) warn.push(`Hàng tồn kho ${change(r.invG)}, nhanh hơn doanh thu (${change(r.revG)}).`);
+    else if (invGap > 0.05) warn.push(`Hàng tồn kho ${change(r.invG)} trong khi doanh thu ${change(r.revG)}.`);
 
-    if (isNum(r.icr) && r.icr !== Infinity) {
-      if (r.icr < 1) danger.push(`Lợi nhuận trước lãi vay và thuế không đủ trả lãi vay (khả năng trả lãi ${fX(r.icr, 1)}).`);
-      else if (r.icr < 1.5) danger.push(`Khả năng trả lãi vay chỉ ${fX(r.icr, 1)}: lợi nhuận gần như chỉ đủ trả lãi.`);
-      else if (r.icr < 3) warn.push(`Khả năng trả lãi vay ${fX(r.icr, 1)}, ở mức thấp.`);
+    // Khả năng trả lãi: lấy mức yếu hơn giữa số trên KQKD và số theo tiền lãi thực trả.
+    const intExp = C('interest');
+    const icrWorst = isNum(r.icrCash) ? Math.min(r.icrCash, isNum(r.icr) ? r.icr : Infinity) : r.icr;
+    if (isNum(icrWorst) && icrWorst !== Infinity) {
+      if (icrWorst < 1) danger.push(`Lợi nhuận trước lãi vay và thuế không đủ trả lãi vay (khả năng trả lãi ${fX(icrWorst, 1)}).`);
+      else if (icrWorst < 1.5) danger.push(`Khả năng trả lãi vay chỉ ${fX(icrWorst, 1)}: lợi nhuận gần như chỉ đủ trả lãi.`);
+      else if (icrWorst < 3) warn.push(`Khả năng trả lãi vay ${fX(icrWorst, 1)}, ở mức thấp.`);
+    }
+    if (r.intPaid > 0 && (!(intExp > 0) || r.intPaid > 1.5 * intExp)) {
+      warn.push(`Tiền lãi vay thực trả (${fTy(r.intPaid)}) lớn hơn nhiều so với chi phí lãi vay trên báo cáo kết quả kinh doanh (${fTy(intExp)}): phần lớn lãi vay đang được vốn hóa vào tài sản (thường là hàng tồn kho, công trình dở dang), nên lợi nhuận và khả năng trả lãi trên giấy trông đẹp hơn thực tế.`);
     }
     if (r.cr < 1) warn.push(`Hệ số thanh toán hiện hành ${fX(r.cr)}: nợ ngắn hạn lớn hơn tài sản ngắn hạn.`);
     if (isNum(C('std')) && isNum(r.liquid) && C('std') > r.liquid) {
@@ -510,7 +568,9 @@
     else if (r.de > 1) warn.push(`Nợ vay / VCSH = ${fX(r.de)}, ở mức cao đối với doanh nghiệp phi tài chính.`);
 
     const gmDelta = r.gm[1] - r.gm[0];
-    if (gmDelta <= -0.03) warn.push(`Biên lợi nhuận gộp giảm ${fNum(-gmDelta * 100, 1)} điểm % so với năm trước.`);
+    const gmJump = Math.abs(gmDelta) >= 0.2;
+    if (gmJump) warn.push(`Biên lợi nhuận gộp thay đổi bất thường, từ ${fPct(r.gm[0])} thành ${fPct(r.gm[1])}. Đọc thuyết minh giá vốn để tìm nguyên nhân; thường là khoản ghi nhận một lần.`);
+    else if (gmDelta <= -0.03) warn.push(`Biên lợi nhuận gộp giảm ${fNum(-gmDelta * 100, 1)} điểm % so với năm trước.`);
     if (isNum(r.core) && C('ebt') > 0) {
       if (r.core < 0) danger.push(`Kinh doanh chính lỗ (lợi nhuận cốt lõi ${fTy(r.core)}) nhưng tổng thể vẫn có lãi trước thuế: lợi nhuận đến từ các hoạt động khác.`);
       else if ((C('ebt') - r.core) / C('ebt') > 0.5) warn.push(`Hơn một nửa lợi nhuận trước thuế đến từ ngoài kinh doanh chính (lợi nhuận cốt lõi ${fTy(r.core)}, LN trước thuế ${fTy(C('ebt'))}). Những khoản này thường khó lặp lại.`);
@@ -525,9 +585,9 @@
     if (r.revG >= 0.1 && r.niG >= 0.1) good.push(`Doanh thu (${fSignedPct(r.revG)}) và lợi nhuận (${fSignedPct(r.niG)}) cùng tăng trưởng từ 10% trở lên.`);
     if (r.netDebt < 0) good.push(`Tiền mặt ròng ${fTy(-r.netDebt)}: tiền và đầu tư ngắn hạn nhiều hơn nợ vay.`);
     if (r.icr === Infinity) good.push('Không có chi phí lãi vay.');
-    else if (r.icr >= 5) good.push(`Lợi nhuận trước lãi vay và thuế gấp ${fX(r.icr, 1)} chi phí lãi vay.`);
+    else if (icrWorst >= 5) good.push(`Lợi nhuận trước lãi vay và thuế gấp ${fX(icrWorst, 1)} lãi vay phải trả.`);
     if (r.divTotal > 0 && r.fcf >= r.divTotal) good.push('Cổ tức tiền mặt được trả bằng dòng tiền tự do.');
-    if (gmDelta >= 0.01) good.push(`Biên lợi nhuận gộp cải thiện ${fNum(gmDelta * 100, 1)} điểm %.`);
+    if (gmDelta >= 0.01 && !gmJump) good.push(`Biên lợi nhuận gộp cải thiện ${fNum(gmDelta * 100, 1)} điểm %.`);
 
     return { good, warn, danger };
   }
@@ -673,6 +733,16 @@
     update();
   }
 
+  function loadPreset(key) {
+    const preset = PRESETS[key];
+    if (!preset) return;
+    clearInputs();
+    $('unit').value = '1e9';
+    fill(preset.data);
+    setBanner(`Đang hiển thị số liệu thật của ${preset.label}: BCTC hợp nhất đã kiểm toán năm 2025, cột "Năm trước" là năm 2024, đơn vị tỷ đồng. Nhập giá cổ phiếu hiện tại để tính P/E, P/B và định giá. Phân tích chi tiết ở Bài 9 của cẩm nang.`);
+    update();
+  }
+
   let timer = 0;
   function update() { render(); save(); }
   function scheduleUpdate() { clearTimeout(timer); timer = setTimeout(update, 150); }
@@ -681,7 +751,10 @@
   $('btn-example').addEventListener('click', loadExample);
   $('btn-clear').addEventListener('click', () => { clearInputs(); setBanner(''); update(); });
   document.addEventListener('input', (e) => { if (e.target.classList && e.target.classList.contains('persist')) { setBanner(''); scheduleUpdate(); } });
-  document.addEventListener('change', (e) => { if (e.target.id === 'unit') { setBanner(''); update(); } });
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'unit') { setBanner(''); update(); }
+    if (e.target.id === 'preset' && e.target.value) { loadPreset(e.target.value); e.target.value = ''; }
+  });
   document.addEventListener('focusout', (e) => {
     const el = e.target;
     if (!el.classList || !el.classList.contains('field')) return;

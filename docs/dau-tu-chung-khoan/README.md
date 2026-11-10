@@ -26,7 +26,7 @@ Bộ tài liệu tự học dành cho người **chưa biết gì** về chứng
 | 5 | [Bài 4](04-dinh-gia-co-phieu.md) | So sánh P/E, P/B của 3 doanh nghiệp cùng ngành; xây 3 kịch bản định giá |
 | 6 | [Bài 5](05-dau-hieu-canh-bao.md) | Tìm các dấu hiệu cảnh báo trong BCTC của một doanh nghiệp từng gặp khó khăn |
 | 7 | [Bài 6](06-quan-ly-rui-ro-va-tam-ly.md) | Viết ra quy tắc phân bổ vốn và quy tắc bán của riêng bạn |
-| 8 | [Bài 7](07-checklist-va-nhat-ky.md) | Chạy checklist, ghi nhật ký; giải ngân thử một khoản nhỏ (cổ phiếu hoặc quỹ ETF) |
+| 8 | [Bài 7](07-checklist-va-nhat-ky.md), [Bài 9](09-vi-du-thuc-te.md) | Đối chiếu cách bạn phân tích với 4 ví dụ doanh nghiệp thật; chạy checklist, ghi nhật ký; giải ngân thử một khoản nhỏ (cổ phiếu hoặc quỹ ETF) |
 
 Không cần vội. Học xong 8 tuần mà chỉ dùng số tiền nhỏ vẫn tốt hơn nhiều so với vào thị trường ngay bằng toàn bộ tiền tiết kiệm.
 
@@ -42,6 +42,7 @@ Không cần vội. Học xong 8 tuần mà chỉ dùng số tiền nhỏ vẫn 
 | 6 | [Quản lý rủi ro và tâm lý](06-quan-ly-rui-ro-va-tam-ly.md) | Phân bổ vốn, margin, khi nào bán, các bẫy tâm lý và lừa đảo |
 | 7 | [Checklist và nhật ký đầu tư](07-checklist-va-nhat-ky.md) | 20 câu hỏi trước khi mua, mẫu nhật ký giao dịch |
 | 8 | [Thuật ngữ](08-thuat-ngu.md) | Từ điển Việt – Anh các thuật ngữ thường gặp |
+| 9 | [Thực hành với BCTC thật](09-vi-du-thuc-te.md) | Phân tích BCTC đã kiểm toán của Vinamilk, FPT, Hòa Phát, Novaland: doanh nghiệp chất lượng, doanh nghiệp tăng trưởng, ngành chu kỳ, các dấu hiệu cảnh báo |
 
 ## Công cụ: Phân tích nhanh BCTC
 
@@ -50,7 +51,7 @@ Không cần vội. Học xong 8 tuần mà chỉ dùng số tiền nhỏ vẫn 
 - Nhập số liệu 2 năm từ BCTC, công cụ tự tính hơn 25 chỉ số và đánh giá theo ngưỡng tham khảo.
 - Tự phát hiện một số dấu hiệu cảnh báo: có lãi nhưng không có tiền, phải thu tăng bất thường, nợ vay cao, cổ tức vượt dòng tiền...
 - Định giá theo 3 kịch bản (bi quan, cơ sở, lạc quan) và tính giá mua tối đa theo biên an toàn bạn chọn.
-- Có sẵn dữ liệu Công ty ABC để bạn đối chiếu với các bài học.
+- Có sẵn dữ liệu Công ty ABC để bạn đối chiếu với các bài học, cùng số liệu BCTC 2024–2025 đã kiểm toán của Vinamilk, FPT, Hòa Phát, Novaland (xem [Bài 9](09-vi-du-thuc-te.md)).
 
 **Cách mở:** tải file về máy (trên GitHub: mở file rồi bấm nút *Download raw file*), sau đó nhấp đúp để mở bằng Chrome, Edge, Safari hoặc Firefox.
 

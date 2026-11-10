@@ -33,6 +33,9 @@ Giả sử lãi suất tiết kiệm là 6%/năm. Cổ phiếu cần mang lại 
 - **Doanh nghiệp thua lỗ.** P/E không có ý nghĩa.
 - **P/E thấp vì có lý do.** Thị trường có thể đang lo ngại điều gì đó: nợ nhiều, quản trị kém, ngành suy thoái. Hãy tìm ra lý do trước khi kết luận "rẻ". Mua phải cổ phiếu rẻ vì có vấn đề thật sự gọi là **bẫy giá trị**.
 
+> [!TIP]
+> Ví dụ thật về P/E ở đỉnh chu kỳ: cuối năm 2021, Hòa Phát có P/E chỉ khoảng 7,5 lần, nhưng sau đó lợi nhuận giảm 75% và vốn hóa giảm khoảng 66% trong một năm. Xem [Bài 9, mục 3](09-vi-du-thuc-te.md#3-hòa-phát-hpg-ngành-có-tính-chu-kỳ-và-cái-bẫy-pe).
+
 ## 3. P/B: hệ số giá trên giá trị sổ sách
 
 **P/B = Giá / BVPS.** ABC: 50.000 / 30.000 = **1,67 lần**. Thị trường đang trả 1,67 đồng cho mỗi 1 đồng vốn chủ sở hữu.

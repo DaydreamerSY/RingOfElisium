@@ -115,6 +115,8 @@ Các chỉ số rời rạc không giúp bạn ra quyết định. Hãy tập vi
 
 Câu hỏi tiếp theo: **với chất lượng như vậy, giá 50.000đ là đắt hay rẻ?** Câu trả lời nằm ở [Bài 4](04-dinh-gia-co-phieu.md).
 
+Muốn xem các chỉ số này trên doanh nghiệp thật? [Bài 9](09-vi-du-thuc-te.md) so sánh Vinamilk và FPT: cả hai có ROE gần 30%, nhưng một bên tăng trưởng gần như bằng 0, bên kia tăng gần 20%/năm.
+
 ## Bảng tóm tắt để in ra
 
 | Nhóm | Chỉ số | Tốt | Cần chú ý |
